@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "unloop-music"
-version = "0.10.0.dev0"
+version = "1.0.0a1"
 description = "A local-first, provider-agnostic music discovery engine that optimizes for novelty instead of repetition."
 readme = "README.md"
 requires-python = ">=3.12"
