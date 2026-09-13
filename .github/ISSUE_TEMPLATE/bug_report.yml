@@ -1,0 +1,32 @@
+name: Bug report
+description: Report reproducible incorrect behavior
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Include expected and actual behavior. Do not include tokens or private listening data.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: UNLOOP version/commit
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Provider
+      options:
+        - Offline/mock
+        - Spotify
+        - ListenBrainz
+        - MusicBrainz
+        - Other

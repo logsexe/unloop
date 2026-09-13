@@ -175,6 +175,7 @@ mypy src/unloop
 
 MIT.
 
+
 ## Guided discovery filters (V0.9)
 
-UNLOOP supports language preference, relatability, release-year bounds, explicit-content filtering, and optional genre/scene constraints. `English only` is explicitly best-effort because Spotify does not expose canonical track-language metadata; UNLOOP refuses to fake certainty and uses conservative language signals instead.
+UNLOOP now supports language preference, relatability, release-year bounds, explicit-content filtering, and optional genre/scene constraints. `English only` is explicitly best-effort because Spotify does not expose canonical track-language metadata; UNLOOP refuses to fake certainty and uses conservative language signals instead.

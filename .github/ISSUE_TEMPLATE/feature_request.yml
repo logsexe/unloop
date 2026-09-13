@@ -1,0 +1,22 @@
+name: Feature request
+description: Propose an improvement to music discovery or a provider adapter
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed approach
+    validations:
+      required: true
+  - type: textarea
+    id: provider
+    attributes:
+      label: Provider/API impact
+      description: Note any external API, OAuth scopes, or provider restrictions involved.
