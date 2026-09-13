@@ -1,6 +1,6 @@
 # UNLOOP Android
 
-Native Android client foundation for UNLOOP.
+Native Android client for the UNLOOP V1 Developer Preview.
 
 ## Product rule
 
@@ -10,22 +10,29 @@ The mobile app must preserve the core UNLOOP behaviour:
 - no infinite recommendation stream;
 - no streaks or engagement loops;
 - finite batches only;
-- explicit controls over discovery;
+- explicit discovery controls;
 - streaming-service independence.
 
-## Current V0.10 scope
+## V1 Developer Preview
 
-This directory contains the first Jetpack Compose shell for the future mobile client.
+The Android client now talks to the real UNLOOP engine.
 
-Today it provides:
+It supports:
 
-- native UNLOOP visual direction;
-- provider-selection surface;
-- finite-batch entry point;
-- mobile-first information hierarchy;
-- Android project structure ready for real API integration.
+- configurable engine URL;
+- engine health check;
+- Spotify connected/not-connected state;
+- Spotify OAuth browser handoff;
+- Safe / Explore / Deep Cut / Chaos;
+- 15 / 30 / 45-track batches;
+- language preference;
+- relatability control;
+- optional genre/scene seed;
+- optional playlist name;
+- finite playlist creation;
+- open-playlist handoff when the batch is finished.
 
-The buttons are intentionally not wired to Spotify yet. The next mobile milestone is to connect this client to the same provider/discovery boundary used by the Python reference app.
+There is deliberately no next-feed action after completion.
 
 ## Toolchain
 
@@ -36,21 +43,41 @@ The buttons are intentionally not wired to Spotify yet. The next mobile mileston
 - targetSdk 37
 - JDK 17
 
-## Open in Android Studio
+## Run with the Android emulator
 
-Open the `clients/android` directory as a Gradle project.
+Start the Python engine from the repository root:
 
-The project does not yet commit a Gradle wrapper. Android Studio can import the Gradle build directly; a wrapper will be added once the mobile build pipeline is stabilised.
+```bash
+uvicorn unloop.api.app:app --host 0.0.0.0 --reload --port 8787
+```
 
-## Near-term mobile roadmap
+Open `clients/android` in Android Studio and run the app. The default engine address is:
 
-1. Connections screen
-2. Spotify PKCE handoff
-3. provider-neutral connection model
-4. finite batch builder
-5. result cards with artwork and explanations
-6. Like / Skip / Nope / Cooldown
-7. playlist publishing
-8. local secure token storage
-9. offline recommendation memory
-10. Apple Music adapter
+```text
+http://10.0.2.2:8787
+```
+
+Tap **CHECK CONNECTION**.
+
+## Run on a physical Android phone
+
+The computer and phone must be able to reach each other on the local network.
+
+Run the engine with `--host 0.0.0.0`, then enter the computer's LAN address in the app, for example:
+
+```text
+http://192.168.1.50:8787
+```
+
+The developer preview permits cleartext HTTP for local-network testing. Do not expose this development server directly to the internet.
+
+## Next hardening milestones
+
+1. secure persistent mobile credentials;
+2. native OAuth callback/deep-link handling;
+3. richer result cards with artwork and recommendation explanations;
+4. Like / Skip / Nope / Cooldown from Android;
+5. HTTPS-only remote networking;
+6. offline recommendation memory and on-device-core strategy;
+7. Apple Music adapter;
+8. iOS client.

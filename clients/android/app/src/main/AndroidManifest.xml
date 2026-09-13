@@ -6,6 +6,7 @@
         android:allowBackup="false"
         android:label="UNLOOP"
         android:supportsRtl="true"
+        android:usesCleartextTraffic="true"
         android:theme="@style/Theme.Unloop">
         <activity
             android:name=".MainActivity"

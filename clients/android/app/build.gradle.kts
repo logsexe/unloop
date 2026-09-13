@@ -12,8 +12,8 @@ android {
         applicationId = "app.unloop.mobile"
         minSdk = 28
         targetSdk = 37
-        versionCode = 10
-        versionName = "0.10.0-dev"
+        versionCode = 10000
+        versionName = "1.0.0-alpha01"
     }
 
     buildFeatures {
@@ -40,6 +40,7 @@ dependencies {
     implementation("androidx.compose.foundation:foundation")
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
 }
