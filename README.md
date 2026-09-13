@@ -10,18 +10,36 @@ No swiping. No infinite feed. No ads. No sponsored ranking. No engagement loop.
 
 **Find music. Save the playlist. Leave.**
 
+## V1 Developer Preview
+
+V1 is the first end-to-end UNLOOP milestone: the discovery engine and native Android client now work together.
+
+From Android you can:
+
+- connect to an UNLOOP engine on your local network;
+- see whether Spotify is connected;
+- start Spotify OAuth;
+- choose Safe / Explore / Deep Cut / Chaos;
+- choose 15 / 30 / 45 tracks;
+- prefer English, require English best-effort, or allow any language;
+- control relatability;
+- seed a genre / scene;
+- name the playlist or keep the default;
+- create a finite playlist and open it in your streaming app.
+
+The Android client deliberately ends after the batch is created. There is no next-feed queue.
+
 ## Why
 
 Music discovery should not become another feed to scroll.
 
-UNLOOP gives you a finite batch of music selected for relevance, novelty and exploration. It remembers what it already recommended, avoids overexposed artists, lets you control how adventurous discovery should be, and explains why a track made the cut.
+UNLOOP gives you a finite batch selected for relevance, novelty and exploration. It remembers what it already recommended, avoids overexposed artists, lets you control how adventurous discovery should be, and explains the ranking rather than hiding behind a black box.
 
 The goal is simple: **spend less time choosing music and more time listening to it.**
 
-## What works today
+## What works
 
-- Spotify connection via OAuth PKCE
-- Spotify listening-history import
+- Spotify OAuth PKCE and listening-history import
 - finite discovery batches
 - Safe / Explore / Deep Cut / Chaos modes
 - custom playlist names
@@ -33,9 +51,10 @@ The goal is simple: **spend less time choosing music and more time listening to 
 - Like / Skip / Nope feedback
 - local SQLite persistence
 - taste and batch analytics
-- direct playlist publishing to Spotify
+- direct private Spotify playlist publishing
+- native Android client under `clients/android`
 
-Spotify is the first streaming adapter, **not the architecture**. Apple Music, Navidrome and local libraries are planned providers.
+Spotify is the first streaming adapter, **not the architecture**. Apple Music, Navidrome and local libraries remain provider targets.
 
 ## Principles
 
@@ -49,22 +68,16 @@ UNLOOP will not ship:
 - advertising
 - time-on-platform optimisation
 
-UNLOOP is built around:
+UNLOOP is built around finite discovery, explicit control, explainable ranking, local-first data, portable taste and provider independence.
 
-- finite discovery
-- explicit user control
-- explainable ranking
-- local-first data
-- portable taste
-- streaming-provider independence
-
-## Quick start
+## Run the engine
 
 Requires Python 3.12+.
 
 ```bash
 git clone https://github.com/logsexe/unloop.git
 cd unloop
+git checkout release/v1
 python -m venv .venv
 ```
 
@@ -74,40 +87,42 @@ Windows PowerShell:
 .\.venv\Scripts\Activate.ps1
 pip install -e ".[dev]"
 Copy-Item .env.example .env
-uvicorn unloop.api.app:app --reload --port 8787
+uvicorn unloop.api.app:app --host 0.0.0.0 --reload --port 8787
 ```
 
-macOS / Linux:
-
-```bash
-source .venv/bin/activate
-pip install -e '.[dev]'
-cp .env.example .env
-uvicorn unloop.api.app:app --reload --port 8787
-```
-
-Open `http://127.0.0.1:8787/`.
-
-For Spotify development, create a Spotify developer app and set the redirect URI to:
+Set `UNLOOP_SPOTIFY_CLIENT_ID` in `.env` and configure this redirect URI in your Spotify developer app:
 
 ```text
 http://127.0.0.1:8787/v1/connections/spotify/callback
 ```
 
-Then add your client ID to `.env`:
+For desktop use, open `http://127.0.0.1:8787/`.
+
+## Android
+
+Open `clients/android` in Android Studio.
+
+The emulator defaults to:
 
 ```text
-UNLOOP_SPOTIFY_CLIENT_ID=your_client_id
+http://10.0.2.2:8787
 ```
 
-## Mobile
+On a physical phone, enter the LAN address of the computer running UNLOOP, for example:
 
-V0.10 begins the native mobile path. The Python application remains the reference discovery engine while native clients are developed under `clients/`.
+```text
+http://192.168.1.50:8787
+```
 
-- `clients/android` — native Android / Jetpack Compose foundation
-- iOS — planned
+The current Android preview allows cleartext HTTP only to make local-network development simple. A production distribution must move remote traffic to HTTPS and persistent credentials to platform-secure storage.
 
-The mobile goal is the same: **request a finite batch, save it to your streaming service, and leave.**
+## V1 boundary
+
+V1 Developer Preview is intended for self-hosted/local testing. It is **not yet** a Play Store or App Store production release.
+
+Before public-store distribution we still need persistent secure mobile auth, hardened networking, full native feedback/result detail, accessibility review, Apple Music implementation, and release signing.
+
+See [`docs/V1.md`](docs/V1.md) for the milestone contract.
 
 ## Development
 
@@ -116,10 +131,6 @@ pytest
 ruff check .
 mypy src/unloop
 ```
-
-## Status
-
-Early alpha — current development line: **V0.10**.
 
 ## License
 
