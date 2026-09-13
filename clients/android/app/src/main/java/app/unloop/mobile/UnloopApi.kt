@@ -12,10 +12,21 @@ data class SpotifyStatus(
     val connected: Boolean,
 )
 
+data class TrackResult(
+    val id: String,
+    val artistId: String,
+    val title: String,
+    val artistName: String,
+    val reason: String,
+    val score: Int,
+)
+
 data class PlaylistResult(
     val playlistUrl: String,
-    val trackCount: Int,
-)
+    val tracks: List<TrackResult>,
+) {
+    val trackCount: Int get() = tracks.size
+}
 
 class UnloopApi(private val baseUrl: String) {
     private val root = baseUrl.trimEnd('/')
@@ -53,32 +64,79 @@ class UnloopApi(private val baseUrl: String) {
             if (genre.isNotBlank()) add("genre=${encode(genre)}")
         }.joinToString("&")
         val json = request("POST", "/v1/playlists/discovery?$query")
+        val rawTracks = json.optJSONArray("tracks")
+        val tracks = buildList {
+            if (rawTracks != null) {
+                for (index in 0 until rawTracks.length()) {
+                    val ranked = rawTracks.optJSONObject(index) ?: continue
+                    val track = ranked.optJSONObject("track") ?: continue
+                    val reasons = ranked.optJSONArray("reasons")
+                    val reason = if (reasons != null && reasons.length() > 0) {
+                        reasons.optString(0)
+                    } else {
+                        "Selected by UNLOOP"
+                    }
+                    val finalScore = ranked.optJSONObject("score")?.optDouble("final_score", 0.0) ?: 0.0
+                    add(
+                        TrackResult(
+                            id = track.optString("id"),
+                            artistId = track.optString("artist_id"),
+                            title = track.optString("title"),
+                            artistName = track.optString("artist_name"),
+                            reason = reason,
+                            score = (finalScore * 100).toInt(),
+                        )
+                    )
+                }
+            }
+        }
         PlaylistResult(
             playlistUrl = json.getString("playlist_url"),
-            trackCount = json.optJSONArray("tracks")?.length() ?: 0,
+            tracks = tracks,
         )
+    }
+
+    suspend fun feedback(track: TrackResult, action: String) = withContext(Dispatchers.IO) {
+        val payload = JSONObject()
+            .put("track_id", track.id)
+            .put("artist_id", track.artistId)
+            .put("artist_name", track.artistName)
+            .put("action", action)
+        if (action == "cooldown") payload.put("cooldown_days", 90)
+        request("POST", "/v1/feedback", payload.toString())
     }
 
     private fun encode(value: String): String = URLEncoder.encode(value, Charsets.UTF_8.name())
 
-    private fun request(method: String, path: String): JSONObject {
+    private fun request(method: String, path: String, jsonBody: String? = null): JSONObject {
         val connection = (URL("$root$path").openConnection() as HttpURLConnection).apply {
             requestMethod = method
             connectTimeout = 12_000
             readTimeout = 60_000
             setRequestProperty("Accept", "application/json")
             doInput = true
-            if (method == "POST") doOutput = true
+            if (method == "POST") {
+                doOutput = true
+                setRequestProperty("Content-Type", "application/json")
+            }
         }
         try {
-            if (method == "POST") connection.outputStream.use { }
-            val stream = if (connection.responseCode in 200..299) connection.inputStream else connection.errorStream
+            if (method == "POST") {
+                connection.outputStream.use { stream ->
+                    if (jsonBody != null) stream.write(jsonBody.toByteArray())
+                }
+            }
+            val stream = if (connection.responseCode in 200..299) {
+                connection.inputStream
+            } else {
+                connection.errorStream
+            }
             val body = stream?.bufferedReader()?.use { it.readText() }.orEmpty()
             if (connection.responseCode !in 200..299) {
                 val detail = runCatching { JSONObject(body).optString("detail") }.getOrNull()
                 error(detail?.takeIf { it.isNotBlank() } ?: "UNLOOP request failed (${connection.responseCode})")
             }
-            return JSONObject(body)
+            return if (body.isBlank()) JSONObject() else JSONObject(body)
         } finally {
             connection.disconnect()
         }
