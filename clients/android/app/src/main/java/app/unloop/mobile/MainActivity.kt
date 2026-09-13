@@ -75,6 +75,7 @@ private fun UnloopApp() {
     var playlistName by remember { mutableStateOf("") }
     var genre by remember { mutableStateOf("") }
     var lastPlaylist by remember { mutableStateOf<PlaylistResult?>(null) }
+    var feedbackByTrack by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
 
     fun api() = UnloopApi(baseUrl)
 
@@ -172,16 +173,12 @@ private fun UnloopApp() {
         CardColumn {
             ChoiceRow("Mode", listOf("safe", "explore", "deep_cut", "chaos"), mode) { mode = it }
             ChoiceRow("Tracks", listOf("15", "30", "45"), limit.toString()) { limit = it.toInt() }
-            ChoiceRow(
-                "Language",
-                listOf("english_preferred", "english_only", "any"),
-                language,
-            ) { language = it }
-            ChoiceRow(
-                "Relatability",
-                listOf("close", "balanced", "open"),
-                relatability,
-            ) { relatability = it }
+            ChoiceRow("Language", listOf("english_preferred", "english_only", "any"), language) {
+                language = it
+            }
+            ChoiceRow("Relatability", listOf("close", "balanced", "open"), relatability) {
+                relatability = it
+            }
             OutlinedTextField(
                 value = genre,
                 onValueChange = { genre = it },
@@ -213,6 +210,7 @@ private fun UnloopApp() {
                             )
                         }.onSuccess {
                             lastPlaylist = it
+                            feedbackByTrack = emptyMap()
                             statusText = "${it.trackCount} tracks ready. That's it — go listen."
                         }.onFailure {
                             statusText = it.message ?: "Discovery failed."
@@ -229,16 +227,40 @@ private fun UnloopApp() {
         }
 
         lastPlaylist?.let { result ->
-            SectionTitle("Your batch is ready")
+            SectionTitle("Your batch")
             CardColumn {
                 Text("${result.trackCount} tracks", color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Black)
-                Text("No next feed. No swipe queue. This batch ends here.", color = Muted)
+                Text("Rate what lands. There is no next-feed queue after this batch.", color = Muted)
                 Button(
                     onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(result.playlistUrl))) },
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text("OPEN PLAYLIST")
                 }
+            }
+
+            result.tracks.forEachIndexed { index, track ->
+                TrackCard(
+                    number = index + 1,
+                    track = track,
+                    feedback = feedbackByTrack[track.id],
+                    onFeedback = { action ->
+                        scope.launch {
+                            runCatching { api().feedback(track, action) }
+                                .onSuccess {
+                                    feedbackByTrack = feedbackByTrack + (track.id to action)
+                                }
+                                .onFailure {
+                                    statusText = it.message ?: "Could not save feedback."
+                                }
+                        }
+                    },
+                )
+            }
+
+            CardColumn {
+                Text("That's it.", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Black)
+                Text("Your finite batch is complete. Close UNLOOP and listen.", color = Muted)
             }
         }
 
@@ -248,6 +270,44 @@ private fun UnloopApp() {
             fontSize = 12.sp,
         )
         Text("V1 Developer Preview", color = Muted, fontSize = 11.sp)
+    }
+}
+
+@Composable
+private fun TrackCard(
+    number: Int,
+    track: TrackResult,
+    feedback: String?,
+    onFeedback: (String) -> Unit,
+) {
+    CardColumn {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text("$number. ${track.title}", color = Color.White, fontWeight = FontWeight.Bold)
+                Text(track.artistName, color = Muted, fontSize = 13.sp)
+            }
+            Text("${track.score}", color = Acid, fontWeight = FontWeight.Black)
+        }
+        Text(track.reason, color = Color(0xFFC6CBD2), fontSize = 12.sp)
+        if (feedback != null) {
+            Text("Saved: ${feedback.replace('_', ' ')}", color = Good, fontSize = 11.sp)
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            OutlinedButton(onClick = { onFeedback("like") }, modifier = Modifier.weight(1f)) {
+                Text("LIKE", color = Color.White, fontSize = 10.sp)
+            }
+            OutlinedButton(onClick = { onFeedback("skip") }, modifier = Modifier.weight(1f)) {
+                Text("SKIP", color = Color.White, fontSize = 10.sp)
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            OutlinedButton(onClick = { onFeedback("dislike") }, modifier = Modifier.weight(1f)) {
+                Text("NOPE", color = Color.White, fontSize = 10.sp)
+            }
+            OutlinedButton(onClick = { onFeedback("cooldown") }, modifier = Modifier.weight(1f)) {
+                Text("COOL 90D", color = Color.White, fontSize = 10.sp)
+            }
+        }
     }
 }
 
@@ -298,18 +358,30 @@ private fun ProviderCard(name: String, status: String, active: Boolean) {
 private fun StatusLine(label: String, connected: Boolean) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
         Text(label, color = Color.White)
-        Text(if (connected) "CONNECTED" else "NOT CONNECTED", color = if (connected) Good else Bad, fontSize = 11.sp)
+        Text(
+            if (connected) "CONNECTED" else "NOT CONNECTED",
+            color = if (connected) Good else Bad,
+            fontSize = 11.sp,
+        )
     }
 }
 
 @Composable
-private fun ChoiceRow(label: String, values: List<String>, selected: String, onSelect: (String) -> Unit) {
+private fun ChoiceRow(
+    label: String,
+    values: List<String>,
+    selected: String,
+    onSelect: (String) -> Unit,
+) {
     Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
         Text(label.uppercase(), color = Muted, fontSize = 11.sp, fontWeight = FontWeight.Bold)
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             values.forEach { value ->
                 if (value == selected) {
-                    Button(onClick = { onSelect(value) }, colors = ButtonDefaults.buttonColors(containerColor = Acid, contentColor = Ink)) {
+                    Button(
+                        onClick = { onSelect(value) },
+                        colors = ButtonDefaults.buttonColors(containerColor = Acid, contentColor = Ink),
+                    ) {
                         Text(value.replace('_', ' '), fontSize = 11.sp)
                     }
                 } else {
