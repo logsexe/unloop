@@ -1,76 +1,51 @@
 # Roadmap
 
-UNLOOP uses small vertical releases. A feature is not complete until privacy, failure modes and provider-independence are documented.
+UNLOOP is moving quickly toward a simple mobile product: connect your streaming service, request a finite batch, save it, leave.
 
-## 0.1 — Foundation ✅
-- [x] Provider-agnostic domain model
-- [x] Explainable novelty-weighted scorer
-- [x] Offline mock provider
-- [x] FastAPI endpoints
-- [x] Docker and CI
-- [x] Baseline tests
+## Now — V0.10
 
-## 0.2 — Control + connection ✅
-- [x] Safe / Explore / Deep Cut / Chaos presets
-- [x] New-artist ratio and per-artist caps
-- [x] Artist cooldowns + explicit feedback
-- [x] SQLite persistence
-- [x] Spotify PKCE OAuth
-- [x] Spotify recent/top-items primitives
+- [x] focused public README
+- [x] Spotify discovery flow
+- [x] open discovery sources via ListenBrainz / MusicBrainz
+- [x] recommendation memory and artist saturation
+- [x] guided discovery filters
+- [x] finite-batch web product UI
+- [x] native Android project foundation
+- [x] Android CI build
+- [ ] native Connections screen
+- [ ] native finite-batch builder
+- [ ] native Spotify PKCE handoff
+- [ ] secure mobile token storage
 
-## 0.3 — First live vertical slice ✅
-- [x] Real Spotify history provider
-- [x] Spotify catalog candidate generation
-- [x] Private Spotify playlist publishing
-- [x] Token refresh while process is running
-- [x] `/v1/taste` inspection endpoint
-- [x] Local status screen
+## Next — Mobile alpha
 
-## 0.4 — Taste intelligence + open metadata ✅
-- [x] MusicBrainz artist identity enrichment
-- [x] Respectful one-request-per-second MusicBrainz client
-- [x] Local artist metadata cache
-- [x] Open genre/tag enrichment
-- [x] Multi-cluster taste summary
-- [x] Artist saturation model
-- [x] Distinguish long-term familiarity from recent repetition
-- [x] Saturation-aware recommendation penalty
-- [x] Metadata coverage reporting
+- [ ] Android Discover screen wired to real UNLOOP data
+- [ ] track artwork and recommendation explanations
+- [ ] Like / Skip / Nope / Cooldown
+- [ ] playlist naming and publishing
+- [ ] Taste and Analytics screens
+- [ ] Room-backed local state
+- [ ] Android Keystore credentials
+- [ ] provider-neutral mobile connection model
 
-## 0.5 — Open discovery graph
-- [ ] ListenBrainz account connection
-- [ ] ListenBrainz collaborative-filtering candidate source
-- [ ] Recording MBID mapping and recording-tag enrichment
-- [ ] Multi-source candidate deduplication
-- [ ] Source-diversity constraints per batch
-- [ ] Feedback-aware taste adjustment
-- [ ] Track/artist blocklists
+## Then — Provider expansion
 
-## 0.6 — Portable outputs
+- [ ] Apple Music adapter
+- [ ] Navidrome / Subsonic adapter
+- [ ] local-library provider
+- [ ] portable taste export / import
 - [ ] M3U export
-- [ ] Taste profile JSON export/import
-- [ ] Navidrome/Subsonic-compatible export
-- [ ] Provider capability detection
-- [ ] Secure persistent desktop token-store abstraction
 
-## 0.7 — Android alpha
-- [ ] Kotlin + Jetpack Compose shell
-- [ ] Discover / Library / Taste / Settings navigation
-- [ ] Finite discovery batches
-- [ ] Discovery dial + presets
-- [ ] Recommendation explanations
-- [ ] Like / dislike / cooldown controls
-- [ ] Android Keystore token storage
-- [ ] Room local database
-- [ ] Spotify App Remote/deep-link handoff
-- [ ] No analytics SDKs
+## V1.0
 
-## 1.0 — Public release
-- [ ] Stable configuration/export schemas
-- [ ] Security review
-- [ ] Provider setup wizard
-- [ ] Accessibility review
-- [ ] Documentation site
-- [ ] Signed release automation
-- [ ] Reproducible Android builds where practical
-- [ ] Public contribution/governance policy
+- [ ] polished Android release
+- [ ] stable provider contracts
+- [ ] security review
+- [ ] accessibility review
+- [ ] setup wizard
+- [ ] signed release automation
+- [ ] public contribution guide
+
+## Always
+
+No swiping. No infinite feed. No ads. No sponsored ranking. No engagement-maximising loops.
