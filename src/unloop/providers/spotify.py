@@ -1,12 +1,30 @@
 from __future__ import annotations
 
 from collections import Counter
+from typing import cast
 
 from unloop.core.taste import calculate_artist_saturation
-from unloop.domain.models import Candidate, Listen, RankedTrack
+from unloop.domain.models import ArtistMetadata, Candidate, Listen, RankedTrack
 from unloop.integrations.spotify.client import SpotifyAPI
 from unloop.providers.base import CandidateProvider, HistoryProvider, PlaylistProvider
 from unloop.storage import SQLiteStore
+
+
+def _object_dict(value: object) -> dict[str, object]:
+    return cast(dict[str, object], value) if isinstance(value, dict) else {}
+
+
+def _first_artist(item: dict[str, object]) -> dict[str, object]:
+    artists = item.get("artists")
+    if isinstance(artists, list) and artists:
+        return _object_dict(artists[0])
+    return {}
+
+
+def _string_tuple(value: object) -> tuple[str, ...]:
+    if not isinstance(value, (list, tuple)):
+        return ()
+    return tuple(str(item) for item in value)
 
 
 class SpotifyProvider(HistoryProvider, CandidateProvider, PlaylistProvider):
@@ -58,9 +76,9 @@ class SpotifyProvider(HistoryProvider, CandidateProvider, PlaylistProvider):
             if artist.get("id") and artist.get("name"):
                 recent_names.setdefault(str(artist["id"]), str(artist["name"]))
         top_track_counts = Counter(
-            str(((item.get("artists") or [{}])[0]).get("id") or "")
+            str(_first_artist(item).get("id") or "")
             for item in top_tracks
-            if ((item.get("artists") or [{}])[0]).get("id")
+            if _first_artist(item).get("id")
         )
         top_artist_ranks = {
             str(artist["id"]): index + 1
@@ -152,7 +170,7 @@ class SpotifyProvider(HistoryProvider, CandidateProvider, PlaylistProvider):
         genre_counts: Counter[str] = Counter()
         for artist in artists:
             artist_id = str(artist.get("id") or "")
-            genres = tuple(str(g) for g in artist.get("genres") or [])
+            genres = _string_tuple(artist.get("genres"))
             metadata = cached.get(artist_id)
             if metadata:
                 genres = metadata.genres or tuple(metadata.tags) or genres
@@ -162,25 +180,33 @@ class SpotifyProvider(HistoryProvider, CandidateProvider, PlaylistProvider):
                 {"name": genre, "weight": count}
                 for genre, count in genre_counts.most_common(15)
             ],
-            "top_artists": [
-                {
-                    "id": item.get("id"),
-                    "name": item.get("name"),
-                    "genres": list((cached.get(str(item.get("id"))) or None).genres)
-                        if cached.get(str(item.get("id"))) else (item.get("genres") or []),
-                    "musicbrainz_artist_id": (cached.get(str(item.get("id"))) or None).musicbrainz_artist_id
-                        if cached.get(str(item.get("id"))) else None,
-                }
-                for item in artists[:20]
-            ],
+            "top_artists": [self._artist_summary(item, cached) for item in artists[:20]],
             "top_tracks": [
                 {
                     "id": item.get("id"),
                     "name": item.get("name"),
-                    "artist": ((item.get("artists") or [{}])[0]).get("name"),
+                    "artist": _first_artist(item).get("name"),
                 }
                 for item in tracks
             ],
+        }
+
+    @staticmethod
+    def _artist_summary(
+        item: dict[str, object], cached: dict[str, ArtistMetadata]
+    ) -> dict[str, object]:
+        metadata = cached.get(str(item.get("id")))
+        return {
+            "id": item.get("id"),
+            "name": item.get("name"),
+            "genres": (
+                list(metadata.genres)
+                if metadata is not None
+                else list(_string_tuple(item.get("genres")))
+            ),
+            "musicbrainz_artist_id": (
+                metadata.musicbrainz_artist_id if metadata is not None else None
+            ),
         }
 
     async def _top_artists(self) -> list[dict[str, object]]:
@@ -197,7 +223,7 @@ class SpotifyProvider(HistoryProvider, CandidateProvider, PlaylistProvider):
     async def _artist_genres(self) -> dict[str, tuple[str, ...]]:
         artists = await self._top_artists()
         result = {
-            str(artist["id"]): tuple(str(g) for g in artist.get("genres") or [])
+            str(artist["id"]): _string_tuple(artist.get("genres"))
             for artist in artists
             if artist.get("id")
         }

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import Counter
 from datetime import UTC, datetime, timedelta
+from typing import cast
 
 import httpx
 from fastapi import FastAPI, HTTPException, Query
@@ -32,6 +33,7 @@ from unloop.integrations.listenbrainz import ListenBrainzAPI
 from unloop.integrations.spotify.client import SpotifyAPI
 from unloop.integrations.spotify.oauth import TOKEN_URL, create_pkce_request
 from unloop.providers.mock import MockProvider
+from unloop.providers.base import CandidateProvider
 from unloop.providers.composite import CompositeCandidateProvider
 from unloop.providers.listenbrainz import ListenBrainzCandidateProvider
 from unloop.providers.spotify import SpotifyProvider
@@ -40,7 +42,7 @@ from unloop.storage import SQLiteStore
 settings = Settings()
 app = FastAPI(
     title="UNLOOP API",
-    version="0.9.0-dev",
+    version="0.9.0",
     description="Provider-agnostic music discovery optimized for novelty, not engagement.",
 )
 
@@ -49,6 +51,13 @@ _store = SQLiteStore(settings.database_path)
 _service = DiscoveryService(_provider, _provider, _provider, store=_store)
 _spotify_pending: dict[str, str] = {}
 _spotify_tokens: dict[str, object] = {}
+
+
+def _first_artist(item: dict[str, object]) -> dict[str, object]:
+    artists = item.get("artists")
+    if isinstance(artists, list) and artists and isinstance(artists[0], dict):
+        return cast(dict[str, object], artists[0])
+    return {}
 
 
 
@@ -104,7 +113,7 @@ async def _live_discovery_service(
         store=_store,
         seed_genres=preferences.required_genres if preferences else (),
     )
-    candidate_providers = [spotify]
+    candidate_providers: list[CandidateProvider] = [spotify]
     if settings.listenbrainz_username:
         lb = ListenBrainzAPI(token=settings.listenbrainz_token)
         candidate_providers.insert(0, ListenBrainzCandidateProvider(lb, spotify.api, settings.listenbrainz_username))
@@ -173,7 +182,7 @@ a{color:inherit}.top{display:flex;justify-content:space-between;gap:18px;align-i
 .track{display:grid;grid-template-columns:58px 1fr auto;gap:14px;align-items:center;padding:14px 0;border-bottom:1px solid var(--line)}.art{width:58px;height:58px;border-radius:10px;object-fit:cover;background:#20242a}.track-title{font-weight:800}.track-meta{font-size:13px;color:var(--muted);margin-top:2px}.reason{font-size:12px;color:#bbc1ca;margin-top:5px}.actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}.actions button,.actions a{font-size:11px;padding:7px 9px}.actions .active-like{color:var(--good);border-color:var(--good)}.actions .active-bad{color:var(--bad);border-color:var(--bad)}.score{font-weight:850;font-variant-numeric:tabular-nums}.source{font-size:10px;color:var(--muted);max-width:170px;text-align:right;margin-top:4px}.hidden{display:none}.done{text-align:center;padding:34px 10px}.done h2{font-size:29px;margin-bottom:8px}.tabs{display:flex;gap:8px;margin:30px 0 12px}.tabs button.active{background:var(--accent);color:#090a0c}.panel{display:none}.panel.active{display:block}.cluster{display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding:11px 0}.bar{height:7px;border-radius:999px;background:#242932;overflow:hidden;margin-top:6px}.bar>span{display:block;height:100%;background:var(--accent)}
 @media(max-width:720px){.controls{grid-template-columns:1fr}.wide{grid-column:auto}.brand{font-size:46px}.top{display:block}.version{display:inline-block;margin-top:12px}.metrics{grid-template-columns:1fr 1fr}.track{grid-template-columns:50px 1fr}.art{width:50px;height:50px}.scorecol{display:none}}
 </style></head><body><main>
-<div class="top"><div><div class="kicker">Get back your time · Renew your taste</div><h1 class="brand">UNLOOP</h1><p class="lead">A streaming-service-agnostic discovery layer. No swiping. No doomscrolling. No ads. Ask for a finite batch, save it, then leave and listen.</p></div><div class="version">v0.9 dev</div></div>
+<div class="top"><div><div class="kicker">Get back your time · Renew your taste</div><h1 class="brand">UNLOOP</h1><p class="lead">A streaming-service-agnostic discovery layer. No swiping. No doomscrolling. No ads. Ask for a finite batch, save it, then leave and listen.</p></div><div class="version">v0.9</div></div>
 <section class="card manifesto"><strong>Find music. Save the playlist. Leave.</strong><div class="muted" style="margin-top:7px">Success means better music found with less time spent inside UNLOOP.</div></section>
 <div class="tabs"><button class="active" data-tab="discover">Discover</button><button data-tab="taste">Taste</button><button data-tab="analytics">Analytics</button></div>
 <section id="discover" class="panel active">
@@ -213,7 +222,7 @@ loadServices();window.addEventListener('focus',loadServices);document.addEventLi
 
 @app.get("/health", response_model=HealthResponse)
 async def health() -> HealthResponse:
-    return HealthResponse(status="ok", version="0.9.0-dev")
+    return HealthResponse(status="ok", version="0.9.0")
 
 
 @app.get("/v1/philosophy", response_model=PhilosophyResponse)
@@ -428,9 +437,9 @@ async def taste() -> dict[str, object]:
         if item.get("id") and item.get("name"):
             names.setdefault(str(item["id"]), str(item["name"]))
     top_track_counts = Counter(
-        str(((item.get("artists") or [{}])[0]).get("id") or "")
+        str(_first_artist(item).get("id") or "")
         for item in top_tracks
-        if ((item.get("artists") or [{}])[0]).get("id")
+        if _first_artist(item).get("id")
     )
     top_artist_ranks = {
         str(item["id"]): index + 1

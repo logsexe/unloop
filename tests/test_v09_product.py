@@ -12,6 +12,15 @@ def test_home_has_no_swipe_and_product_tabs() -> None:
     assert 'Analytics' in html
     assert 'Cool 90d' in html
     assert 'Create discovery playlist' in html
+    assert 'English preferred' in html
+    assert 'Stay close to my taste' in html
+    assert 'leave blank for default' in html
+
+
+def test_health_reports_release_version() -> None:
+    response = TestClient(app).get('/health')
+    assert response.status_code == 200
+    assert response.json()['version'] == '0.9.0'
 
 
 def test_spotify_track_parses_artwork_and_external_url() -> None:

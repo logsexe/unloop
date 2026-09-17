@@ -22,7 +22,8 @@ UNLOOP is moving quickly toward a simple mobile product: connect your streaming 
 - [ ] Android Discover screen wired to real UNLOOP data
 - [ ] track artwork and recommendation explanations
 - [ ] Like / Skip / Nope / Cooldown
-- [ ] playlist naming and publishing
+- [x] playlist naming and publishing in the reference web app
+- [ ] native playlist naming and publishing
 - [ ] Taste and Analytics screens
 - [ ] Room-backed local state
 - [ ] Android Keystore credentials

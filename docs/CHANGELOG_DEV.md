@@ -1,10 +1,14 @@
-## 0.9.0-dev
+## 0.9.0
 
 - Product-facing Discover / Taste / Analytics interface.
 - Album artwork and direct streaming-service track links.
 - Like, Skip, Nope, and 90-day cooldown controls in the UI.
 - Taste cluster and artist saturation views.
 - Batch novelty / hit-rate analytics.
+- Clear Spotify connection status and connected-state feedback.
+- Optional custom playlist names with a stable default.
+- Language, relatability, release-year, genre, and explicit-content filters.
+- Provider-neutral streaming-service registry and composite candidate sources.
 - GitHub-first project workflow.
 
 # Development changelog
@@ -27,5 +31,5 @@
 - MusicBrainz artist matching is name-based and intentionally conservative; ambiguous artists can remain unmatched.
 - The first metadata sync is deliberately slow because UNLOOP respects MusicBrainz's public one-request-per-second policy.
 - Spotify OAuth tokens remain memory-only across process restarts.
-- Candidate generation is still Spotify-search-first; ListenBrainz collaborative recommendations are planned for 0.5.
+- Candidate generation uses Spotify catalogue search plus optional ListenBrainz collaborative recommendations.
 - Taste clustering is a transparent heuristic taxonomy, not an ML model.

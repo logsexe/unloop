@@ -119,7 +119,7 @@ mypy src/unloop
 
 ## Status
 
-Early alpha — current development line: **V0.10**.
+Early alpha — current release: **V0.9**. The next development line is **V0.10**.
 
 ## License
 
